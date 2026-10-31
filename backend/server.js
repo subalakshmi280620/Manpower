@@ -71,8 +71,9 @@ app.get("/api/health", async (_req, res) => {
     await pool.query("SELECT 1");
     res.json({ ok: true, database: "connected" });
   } catch (e) {
-    res.status(503).json({ ok: false, database: "unavailable", message: "Database connection failed" });
-  }
+  console.error("Database connection error:", e);
+  res.status(503).json({ ok: false, database: "unavailable", message: "Database connection failed" });
+}
 });
 
 app.post("/api/admin/login", rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 }), async (req, res) => {
