@@ -14,6 +14,7 @@ const pool = require("./src/db");
 const { requireAdmin } = require("./src/auth");
 
 const app = express();
+app.set("trust proxy", 1);
 const uploadsDirectory = path.join(__dirname, "uploads");
 const imageTypes = {
   "image/jpeg": { extension: "jpg", signature: buffer => buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff },
