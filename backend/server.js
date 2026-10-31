@@ -71,9 +71,9 @@ app.get("/api/health", async (_req, res) => {
     await pool.query("SELECT 1");
     res.json({ ok: true, database: "connected" });
   } catch (e) {
-  console.error("Database connection error:", e);
-  res.status(503).json({ ok: false, database: "unavailable", message: "Database connection failed" });
-}
+    console.error("Database connection error:", e);
+    res.status(503).json({ ok: false, database: "unavailable", message: "Database connection failed" });
+  }
 });
 
 app.post("/api/admin/login", rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 }), async (req, res) => {
@@ -86,7 +86,10 @@ app.post("/api/admin/login", rateLimit({ windowMs: 15 * 60 * 1000, limit: 10 }),
     }
     const token = jwt.sign({ id: rows[0].id, username: rows[0].username }, process.env.JWT_SECRET, { expiresIn: "8h" });
     res.json({ token, username: rows[0].username });
-  } catch (e) { res.status(500).json({ error: "Login failed" }); }
+  } catch (e) {
+    console.error("Admin login error:", e);
+    res.status(500).json({ error: "Login failed" });
+  }
 });
 
 app.get("/api/content", async (_req, res) => {
