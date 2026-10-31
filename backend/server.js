@@ -183,22 +183,26 @@ app.post("/api/enquiries", rateLimit({ windowMs: 60 * 60 * 1000, limit: 8 }), as
     );
     let notificationSent = null;
 
-    if (process.env.SMTP_HOST && process.env.NOTIFY_EMAIL) {
+    if (process.env.RESEND_API_KEY && process.env.NOTIFY_EMAIL) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: Number(process.env.SMTP_PORT || 587),
-          secure: process.env.SMTP_SECURE === "true",
-          auth: process.env.SMTP_USER
-            ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-            : undefined
+        const response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM || "onboarding@resend.dev",
+            to: [process.env.NOTIFY_EMAIL],
+            subject: "New manpower service enquiry",
+            text: `Name: ${normalizedName}\nEmail: ${normalizedEmail || "-"}\nPhone: ${normalizedPhone}\nService: ${normalizedService || "-"}\nMessage: ${normalizedMessage}`
+          })
         });
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER || process.env.NOTIFY_EMAIL,
-          to: process.env.NOTIFY_EMAIL,
-          subject: "New manpower service enquiry",
-          text: `Name: ${normalizedName}\nEmail: ${normalizedEmail || "-"}\nPhone: ${normalizedPhone}\nService: ${normalizedService || "-"}\nMessage: ${normalizedMessage}`
-        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
         notificationSent = true;
       } catch (error) {
         notificationSent = false;
